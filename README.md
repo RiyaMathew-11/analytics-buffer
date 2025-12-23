@@ -21,7 +21,7 @@ A thread-safe analytics event buffer that batches events and flushes them to an 
 1. Clone the repository:
 ```bash
 git clone https://github.com/RiyaMathew-11/analytics-buffer.git
-cd the-patient-care
+cd analytics-buffer
 ```
 
 2. Install pipenv (if not already installed):
