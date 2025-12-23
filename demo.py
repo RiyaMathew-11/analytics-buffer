@@ -17,9 +17,10 @@ def demo_buffer_size_flush():
     print("DEMO 1: Buffer Size-Based Flush")
     print("-"*60)
     
+    # Try a custom configuration
     buffer = AnalyticsBuffer(max_size = 10, flush_interval = 2.0)
     
-    print(f"Buffer configuration: max_size = 5, flush_interval = 2s")
+    print(f"Buffer configuration: max_size = 10, flush_interval = 2s")
     print(f"Adding 5 events to trigger flush...\n")
     
     for i in range(5):
