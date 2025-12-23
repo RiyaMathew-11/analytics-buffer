@@ -42,3 +42,16 @@ def flaky_api(events, attempt_count: dict):
         raise Exception("Simulated API failure")
     else:
         print(f"  ✓ API call #{attempt_count['count']} succeeded!")
+
+
+def user_session(user_id: int, action_count: int, buffer: "AnalyticsBuffer"):
+    """Simulate user session with multiple actions."""
+    for i in range(action_count):
+        event = {
+            "user_id": user_id,
+            "event": "action",
+            "action_number": i,
+            "timestamp": time.time()
+        }
+        buffer.track(event)
+        time.sleep(0.1)
