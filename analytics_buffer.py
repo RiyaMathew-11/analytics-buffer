@@ -184,8 +184,10 @@ class AnalyticsBuffer:
                     self._start_timer()
 
             # If API is permanently down, the buffer will keep growing. Need a max buffer size to prevent infinite growth. For now, the timer just restarts.
-
             # In production, need to implement a max buffer size or other strategies to prevent infinite growth.
+            # The tradeoff is between memory usage and data loss.
+            # If we set a hard limit, we risk losing data if the API is down for too long, but will be good if recent events matter more than old events. We combine this with an exponential backoff retry to prevent hammering the API.
+
 
     def flush_now(self):
         """
