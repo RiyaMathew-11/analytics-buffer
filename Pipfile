@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+python-dotenv = "*"
+
+[dev-packages]
+pytest = "*"
+pytest-mock = "*"  # For better mocking in tests
+black = "*"  # Code formatter
+flake8 = "*"  # Linter
+mypy = "*"  # Static type checker
+
+[requires]
+python_version = "3.9"
+
+[scripts]
+test = "pytest -v tests/"
+lint = "flake8 ."
+typecheck = "mypy ."
+format = "black ."
