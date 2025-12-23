@@ -176,10 +176,10 @@ def demo_edge_cases():
 print("\nRunning demos for AnalyticsBuffer:\n")
 
 demos = [
-        # ("Buffer Size Flush", demo_buffer_size_flush),
-        # ("Timer Flush", demo_timer_flush),
-        # ("Error Handling", demo_error_handling),
-        # ("Concurrent Usage", demo_concurrent_usage),
+        ("Buffer Size Flush", demo_buffer_size_flush),
+        ("Timer Flush", demo_timer_flush),
+        ("Error Handling", demo_error_handling),
+        ("Concurrent Usage", demo_concurrent_usage),
         ("Edge Cases", demo_edge_cases)
 ]
 
