@@ -1,3 +1,10 @@
+import logging
+import time
+from typing import Any, Dict, List
+
+logger = logging.getLogger(__name__)
+
+
 def default_api_call(events: List[Dict[str, Any]]):
     """
     Mock API call that simulates network delay.

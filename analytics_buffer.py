@@ -4,11 +4,16 @@ from typing import Any, Dict, List, Optional, Callable
 import logging
 from utils import default_api_call
 
+logger = logging.getLogger(__name__)
+
 
 class AnalyticsBuffer:
 
     def __init__(
-        self, max_size: int, flush_interval: float, api_callable: Optional[Callable]
+        self,
+        max_size: int = 10,
+        flush_interval: float = 5.0,
+        api_callable: Optional[Callable] = None,
     ):
         """
         Initialize the AnalyticsBuffer.
@@ -49,50 +54,50 @@ class AnalyticsBuffer:
         self.failed_flushes = 0
 
         logger.info(
-            f"Initialised Analytics Buffer: max_items={max_items}, "
+            f"Initialised Analytics Buffer: max_size={max_size}, "
             f"flush_interval={flush_interval}s"
         )
 
-        def track(self, event: Optional[Dict[str, Any]]) -> bool:
-            """
-            Args:
-                event (Optional[Dict[str, Any]]): The dictionary of event data.
+    def track(self, event: Optional[Dict[str, Any]]) -> bool:
+        """
+        Args:
+            event (Optional[Dict[str, Any]]): The dictionary of event data.
 
-            Returns:
-                bool: True if the event was tracked successfully, otherwise False.
-            """
-            # Handle None events
-            if event is None:
-                logger.warning("Attempted to track a None event - rejected")
-                return False
+        Returns:
+            bool: True if the event was tracked successfully, otherwise False.
+        """
+        # Handle None events
+        if event is None:
+            logger.warning("Attempted to track a None event - rejected")
+            return False
 
-            # Reject events during shutdown
-            if self.is_shutting_down:
-                logger.warning("Buffer is shutting down - rejecting event")
-                return False
+        # Reject events during shutdown
+        if self.is_shutting_down:
+            logger.warning("Buffer is shutting down - rejecting event")
+            return False
 
-            with self.lock:
+        with self.lock:
 
-                self.buffer.append(event)
-                self.total_events_tracked += 1
+            self.buffer.append(event)
+            self.total_events_tracked += 1
 
-                logger.debug(
-                    f"Event tracked. Buffer size: {len(self.buffer)}/{self.max_items}"
+            logger.debug(
+                f"Event tracked. Buffer size: {len(self.buffer)}/{self.max_size}"
+            )
+
+            # Start timer if this is the first event
+            if len(self.buffer) == 1 and self.timer is None:
+                self._start_timer()
+
+            # Check if buffer is full
+            if len(self.buffer) >= self.max_size:
+                logger.info(
+                    f"Buffer full ({self.max_size} items) - triggering flush"
                 )
+                # Flush in a separate thread to keep track() non-blocking
+                threading.Thread(target=self._flush, daemon=True).start()
 
-                # Start timer if this is the first event
-                if len(self.buffer) == 1 and self.timer is None:
-                    self._start_timer()
-
-                # Check if buffer is full
-                if len(self.buffer) >= self.max_items:
-                    logger.info(
-                        f"Buffer full ({self.max_items} items) - triggering flush"
-                    )
-                    # Flush in a separate thread to keep track() non-blocking
-                    threading.Thread(target=self.flush, daemon=True).start()
-
-            return True
+        return True
 
     def _start_timer(self):
         """
@@ -104,7 +109,7 @@ class AnalyticsBuffer:
         if self.timer is not None:
             return
 
-        self.timer = threading.Timer(self.flush_interval, self.flush)
+        self.timer = threading.Timer(self.flush_interval, self._flush)
         self.timer.daemon = True  # Don't prevent program exit
         self.timer.start()
 
@@ -149,7 +154,7 @@ class AnalyticsBuffer:
         # API call happens outside the lock (to avoid blocking other operations)
         try:
             logger.info(f"Flushing {event_count} events to API...")
-            self.api_call_function(events_to_send)
+            self.api_callable(events_to_send)
 
             # Call to action for success: Clear buffer and restart timer
             with self.lock:
@@ -158,7 +163,7 @@ class AnalyticsBuffer:
                 self.successful_flushes += 1
                 self.is_flushing = False
 
-                logger.info(f"✓ Successfully flushed {event_count} events")
+                logger.info(f"Successfully flushed {event_count} events")
 
                 # Restart timer if buffer still has events
                 if len(self.buffer) > 0:
@@ -178,9 +183,9 @@ class AnalyticsBuffer:
                 if len(self.buffer) > 0:
                     self._start_timer()
 
-                # If API is permanently down, the buffer will keep growing. Need a max buffer size to prevent infinite growth. For now, the timer just restarts.
+            # If API is permanently down, the buffer will keep growing. Need a max buffer size to prevent infinite growth. For now, the timer just restarts.
 
-                # In production, need to implement a max buffer size or other strategies to prevent infinite growth.
+            # In production, need to implement a max buffer size or other strategies to prevent infinite growth.
 
     def flush_now(self):
         """
