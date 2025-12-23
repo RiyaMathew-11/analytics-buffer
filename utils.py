@@ -31,3 +31,14 @@ def default_api_call(events: List[Dict[str, Any]]):
     # In production, make the actual HTTP request here:
     # response = requests.post('https://api.example.com/events', json=events)
     # response.raise_for_status()
+
+def flaky_api(events, attempt_count: dict):
+    """
+    Mock API call that fails first 2 times, then succeeds.
+    """
+    attempt_count["count"] += 1
+    if attempt_count["count"] <= 2:
+        print(f"  ✗ API call #{attempt_count['count']} failed (simulated)")
+        raise Exception("Simulated API failure")
+    else:
+        print(f"  ✓ API call #{attempt_count['count']} succeeded!")
