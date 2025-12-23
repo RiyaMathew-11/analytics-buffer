@@ -206,13 +206,19 @@ class AnalyticsBuffer:
 
         self.is_shutting_down = True
 
-        # Flush any remaining events
-        self.flush_now()
-
-        # Wait for flush to complete
         start_time = time.time()
-        while self.is_flushing and (time.time() - start_time) < timeout:
-            time.sleep(0.1)
+        while (time.time() - start_time) < timeout:
+            # Wait for any in-progress flush to complete
+            while self.is_flushing and (time.time() - start_time) < timeout:
+                time.sleep(0.1)
+
+            # Check if buffer is empty
+            with self.lock:
+                if len(self.buffer) == 0:
+                    break
+
+            # Still have events - flush again
+            self._flush()
 
         # Cancel timer
         with self.lock:
